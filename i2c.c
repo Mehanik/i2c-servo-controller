@@ -9,9 +9,10 @@
 
 #include "main.h"
 
-void i2c_init()
+void i2c_init(void)
 {
     /* Set i2c address from EEPROM */
-    uint8_t addr = eeprom_read_byte(&i2c_adders);
+    uint8_t addr = eeprom_read_byte(& ee_i2c_adders);
     TWAR = addr << 1;
 }
+

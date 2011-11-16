@@ -20,17 +20,27 @@
 #include "hardware.h"
 #include "utils.h"
 
-uint8_t servo_currentpos[SERVO_NUM];
-uint8_t servo_target[SERVO_NUM];
-uint8_t servo_speed[SERVO_NUM];
-uint8_t servo_currentpos_buf[SERVO_NUM];
-uint8_t servo_target_buf[SERVO_NUM];
-uint8_t servo_speed_buf[SERVO_NUM];
+typedef struct 
+{
+    uint8_t position;
+    uint8_t target;
+    uint8_t target_buf;
+    uint8_t speed;
+    uint8_t speed_buf;
+    uint16_t pulselength;
+} servo_t;
 
-uint8_t pwm_counter = 0;
-uint8_t speed_counter[SERVO_NUM];
-uint8_t tmpcounter = 0;
+servo_t servo[SERVO_NUM];
 
-uint8_t EEMEM i2c_adders = 0x01;
+uint8_t EEMEM ee_i2c_adders = 0x01;
+
+/*
+ * Limits of the of the pulses length.
+ */
+uint16_t EEMEM ee_min_pulselength[SERVO_NUM] = {W_MIN, W_MIN, W_MIN, W_MIN, \
+                                                W_MIN, W_MIN, W_MIN, W_MIN};
+
+uint16_t EEMEM ee_max_pulselength[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
+                                                W_MAX, W_MAX, W_MAX, W_MAX};
 
 #endif /* HWMPC_H_ */

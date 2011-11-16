@@ -12,6 +12,11 @@ SRC = $(TARGET).c
 ASRC = 
 OPT = s
 
+# Fuses
+LFUSE = 0xcf
+HFUSE = 0xdd
+EFUSE = 0xff
+
 # Name of this Makefile (used for "make depend").
 MAKEFILE = Makefile
 
@@ -89,11 +94,13 @@ LDFLAGS += -Wl,--relax,--gc-sections
 
 # Programming support using avrdude. Settings and variables.
 
-AVRDUDE_PROGRAMMER = stk500v2
-AVRDUDE_PORT = /dev/ttyACM0 
+AVRDUDE_PROGRAMMER = stk500
+#AVRDUDE_PORT = /dev/ttyACM0 
+AVRDUDE_PORT = avrdoper
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
-#AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
-
+AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
+#AVRDUDE_WRITE_FUSES = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m 
+AVRDUDE_WRITE_FUSES = -U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m 
 
 # Uncomment the following if you want avrdude's erase cycle counter.
 # Note that this counter needs to be initialized first using -Yn,
@@ -112,7 +119,6 @@ AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 
 AVRDUDE_BASIC = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_FLAGS = $(AVRDUDE_BASIC) $(AVRDUDE_NO_VERIFY) $(AVRDUDE_VERBOSE) $(AVRDUDE_ERASE_COUNTER)
-
 
 CC = avr-gcc
 OBJCOPY = avr-objcopy
@@ -152,6 +158,9 @@ sym: $(TARGET).sym
 program: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
+# Program fuses
+fuses: 
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FUSES)
 
 # Convert ELF to COFF for use in debugging / simulating in AVR Studio or VMLAB.
 COFFCONVERT=$(OBJCOPY) --debugging \

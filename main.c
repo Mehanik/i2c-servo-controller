@@ -8,6 +8,7 @@
  */
 
 #include "main.h"
+#include "servo.c"
 #include "io.c"
 #include "timers.c"
 #include "i2c.c"
@@ -16,18 +17,19 @@ void main (void)
 {
     for (uint8_t i = 0; i < SERVO_NUM; i++)
     {
-        servo_target[i] = 0;
-        servo_currentpos[i] = 0;
-        servo_speed[i] = 0;
-        speed_counter[i] = 0;
+        servo[i].target = 0;
+        servo[i].target_buf = 0;
+        servo[i].position = 0;
+        servo[i].speed = 0; //
+        servo[i].speed_buf = 0;
+        adjust_servo(i);
     }
     
-    servo_target[0] = 128;
-
     io_init();
     timers_init();
     wdt_enable(WDTO_1S);
     sei();
+    run_pwm();
 
     for(;;)
     {
