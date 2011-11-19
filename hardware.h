@@ -61,10 +61,11 @@
 #define PTIMER      1 // 16-bit timer
 #define PTIMER_DIV  8
 
-#if ! ((PTIMER == 1) && (MCU == atmega48))
+#if ! ((PTIMER == 1) && (MCU == atmega48) && (PTIMER_DIV == 8))
 # warning "Check TCCRxA and TCCRxB registers"
 #endif
 
+// PTIMER works in CTC mode
 #define PTIMER_TCCRA    (0x00 \
                         | (0 << UTILS_AGGL2(COM, PTIMER, A1)) \
                         | (0 << UTILS_AGGL2(COM, PTIMER, A0)) \
@@ -104,7 +105,34 @@
  *            |
  *            minimum pulse length, default value: W_MIN
  *            (0x01)
- *  The value in brackets indicates compliance with the servo[n].position
+ *            
+ *  In brackets are servo[n].position values to generate such impulse length
  */
+
+#define ITIMER      0   // Timer is used to generate an interrupt every 1/200 seconds
+#define ITIMER_DIV  256
+
+#if ! ((ITIMER == 0) && (MCU == atmega48) && (ITIMER_DIV == 256))
+# warning "Check TCCRxA and TCCRxB registers"
+#endif
+
+// ITIMER works in CTC mode
+#define ITIMER_TCCRA    (0x00 \
+                        | (0 << UTILS_AGGL2(COM, PTIMER, A1)) \
+                        | (0 << UTILS_AGGL2(COM, PTIMER, A0)) \
+                        | (0 << UTILS_AGGL2(COM, PTIMER, B1)) \
+                        | (0 << UTILS_AGGL2(COM, PTIMER, B0)) \
+                        | (1 << UTILS_AGGL2(WGM, PTIMER, 1))  \
+                        | (0 << UTILS_AGGL2(WGM, PTIMER, 0)))
+
+#define ITIMER_TCCRB    (0x00 \
+                        | (0 << UTILS_AGGL2(FOC, PTIMER, A))  \
+                        | (0 << UTILS_AGGL2(FOC, PTIMER, B))  \
+                        | (0 << UTILS_AGGL2(WGM, PTIMER, 2))  \
+                        | (1 << UTILS_AGGL2(CS,  PTIMER, 2))  \
+                        | (0 << UTILS_AGGL2(CS,  PTIMER, 1))  \
+                        | (0 << UTILS_AGGL2(CS,  PTIMER, 0)))
+
+#define ITIMER_OCRA     (F_CPU / ITIMER_DIV * 5 / 1000)
 
 #endif // HARDWARE_H_

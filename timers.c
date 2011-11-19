@@ -27,20 +27,46 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
 }
 
 /*
+ * ITIMER, compare match A
+ */
+ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
+{
+    sei();
+    for (int i = 0; i < SERVO_NUM; i++)
+    {
+        if (servo[i].position != servo[i].target)
+        {
+            if (servo[i].position < servo[i].target)
+                servo[i].position ++;
+            else
+                servo[i].position --;
+        }
+    }
+}
+
+/*
  * Timer initialization
  * Must be called before sei()
  */
 inline void timers_init(void)
 {
-    UTILS_AGGL2(TCCR, PTIMER, A) = PTIMER_TCCRA; // load TCCRnA
+    /*
+     * PTIMER
+     */
+    UTILS_AGGL2(TCCR, PTIMER, A) = PTIMER_TCCRA;        // load TCCRnA
 
     // Load OCRnA
-    // Timer work in CTC mode, so TCNT will be set to 0x0000 when compare match
-    UTILS_AGGL2(OCR, PTIMER, AH) = PTIMER_MOD >> 8;   // HIGH bit
-    UTILS_AGGL2(OCR, PTIMER, AL) = PTIMER_MOD & 0xff; // LOW bit
+    UTILS_AGGL2(OCR, PTIMER, AH) = PTIMER_MOD >> 8;     // HIGH bit
+    UTILS_AGGL2(OCR, PTIMER, AL) = PTIMER_MOD & 0xff;   // LOW bit
 
     UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, A)) \
                                | _BV(UTILS_AGGL2(OCIE, PTIMER, B));
+    /*
+     * ITIMER
+     */
+    UTILS_AGGL2(TCCR, ITIMER, A) = ITIMER_TCCRA;        // load TCCRnA
+    UTILS_AGGL2(OCR, ITIMER, A) = ITIMER_OCRA;
+    UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
 }
 
 /*
@@ -48,5 +74,13 @@ inline void timers_init(void)
  */
 inline void run_pwm(void)
 {
+    /*
+     * PTIMER
+     */
     UTILS_AGGL2(TCCR, PTIMER, B) = PTIMER_TCCRB; // load TCCRnB
+
+    /*
+     * ITIMER
+     */
+    UTILS_AGGL2(TCCR, ITIMER, B) = ITIMER_TCCRB; // load TCCRnB
 }

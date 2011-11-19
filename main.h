@@ -30,9 +30,12 @@ typedef struct
     uint16_t pulselength;
 } servo_t;
 
+uint8_t servo_order[SERVO_NUM]; // 
+uint8_t next_servo;
+
 servo_t servo[SERVO_NUM];
 
-uint8_t EEMEM ee_i2c_adders = 0x01;
+uint8_t EEMEM ee_i2c_adders = 0x10;
 
 /*
  * Limits of the of the pulses length.
