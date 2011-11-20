@@ -22,18 +22,23 @@
 
 typedef struct 
 {
-    uint8_t position;
-    uint8_t target;
+    uint8_t position;           // Current position
+    uint8_t target;             // Servo moves from position to target with speed
     uint8_t target_buf;
-    uint8_t speed;
+    uint8_t speed;              // Number of increases or decreases of position
+                                // in time interval 1/200s
     uint8_t speed_buf;
     uint8_t speed_counder;
-    uint16_t pulselength;
+    uint16_t pulselength;       // in PTIMER ticks
     uint16_t pulselength_buf;
 } servo_t;
 
-volatile uint8_t servo_order[SERVO_NUM]; // 
-volatile uint8_t next_servo;
+volatile uint8_t servo_order[SERVO_NUM];    // Servo's numbers, sorted 
+                                            // in ascending order 
+                                            // by servo.position
+volatile uint8_t next_servo;    // Servo with number servo_order[next_servo] 
+                                // will be set to '0' at next PTIMER 
+                                // compare match B 
 
 volatile servo_t servo[SERVO_NUM];
 

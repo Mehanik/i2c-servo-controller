@@ -21,6 +21,7 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
         servo[i].pulselength = servo[i].pulselength_buf;
 
     // Load PTIMER OCRnB
+    next_servo = 0;
     UTILS_AGGL2(OCR, PTIMER, BH) = servo[0].pulselength >> 8;   // HIGH bit
     UTILS_AGGL2(OCR, PTIMER, BL) = servo[0].pulselength & 0xff; // LOW bit
 }
@@ -30,7 +31,25 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
  */
 ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
 {
-    servo_clr(0);
+    uint8_t pr = 0;
+    while (!pr)
+    {
+        servo_clr(servo_order[next_servo]);
+        pr = 1;
+        if (next_servo < SERVO_NUM)
+            if (servo_order[next_servo] == servo_order[next_servo + 1])
+            {
+                next_servo ++;
+                pr = 0;
+            }
+    }
+
+    if (next_servo < SERVO_NUM)
+    {
+        next_servo ++;
+        UTILS_AGGL2(OCR, PTIMER, BH) = servo[next_servo].pulselength >> 8;   // HIGH bit
+        UTILS_AGGL2(OCR, PTIMER, BL) = servo[next_servo].pulselength & 0xff; // LOW bit
+    }
 }
 
 /*
