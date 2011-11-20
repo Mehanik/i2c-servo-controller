@@ -16,6 +16,13 @@
 ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
 {
     servo_set_all();
+
+    for (int i = 0; i < SERVO_NUM; i++)
+        servo[i].pulselength = servo[i].pulselength_buf;
+
+    // Load PTIMER OCRnB
+    UTILS_AGGL2(OCR, PTIMER, BH) = servo[0].pulselength >> 8;   // HIGH bit
+    UTILS_AGGL2(OCR, PTIMER, BL) = servo[0].pulselength & 0xff; // LOW bit
 }
 
 /*
@@ -32,15 +39,9 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
 ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
 {
     sei();
-    for (int i = 0; i < SERVO_NUM; i++)
+    for (int i = 0; i < SERVO_NUM; i ++)
     {
-        if (servo[i].position != servo[i].target)
-        {
-            if (servo[i].position < servo[i].target)
-                servo[i].position ++;
-            else
-                servo[i].position --;
-        }
+        servo_action(i);
     }
 }
 
@@ -59,6 +60,7 @@ inline void timers_init(void)
     UTILS_AGGL2(OCR, PTIMER, AH) = PTIMER_MOD >> 8;     // HIGH bit
     UTILS_AGGL2(OCR, PTIMER, AL) = PTIMER_MOD & 0xff;   // LOW bit
 
+    // Set interrupts flags
     UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, A)) \
                                | _BV(UTILS_AGGL2(OCIE, PTIMER, B));
     /*
@@ -66,6 +68,7 @@ inline void timers_init(void)
      */
     UTILS_AGGL2(TCCR, ITIMER, A) = ITIMER_TCCRA;        // load TCCRnA
     UTILS_AGGL2(OCR, ITIMER, A) = ITIMER_OCRA;
+    // Set interrupts flags
     UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
 }
 

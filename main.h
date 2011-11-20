@@ -27,13 +27,15 @@ typedef struct
     uint8_t target_buf;
     uint8_t speed;
     uint8_t speed_buf;
+    uint8_t speed_counder;
     uint16_t pulselength;
+    uint16_t pulselength_buf;
 } servo_t;
 
-uint8_t servo_order[SERVO_NUM]; // 
-uint8_t next_servo;
+volatile uint8_t servo_order[SERVO_NUM]; // 
+volatile uint8_t next_servo;
 
-servo_t servo[SERVO_NUM];
+volatile servo_t servo[SERVO_NUM];
 
 uint8_t EEMEM ee_i2c_adders = 0x10;
 
@@ -45,5 +47,11 @@ uint16_t EEMEM ee_min_pulselength[SERVO_NUM] = {W_MIN, W_MIN, W_MIN, W_MIN, \
 
 uint16_t EEMEM ee_max_pulselength[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
                                                 W_MAX, W_MAX, W_MAX, W_MAX};
+
+/*
+ * Servo position after power on
+ */
+uint8_t EEMEM ee_default_position[SERVO_NUM] = {128, 128, 128, 128, \
+                                                128, 128, 128, 128};
 
 #endif /* HWMPC_H_ */
