@@ -35,9 +35,14 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     while (!pr)
     {
         servo_clr(servo_order[next_servo]);
+
         pr = 1;
+        uint16_t currentOCR;
+        currentOCR = UTILS_AGGL2(OCR, PTIMER, BL);       // Low byte
+        currentOCR = UTILS_AGGL2(OCR, PTIMER, BH) << 8;  // High byte
+        uint16_t next_servo_pl = servo[servo_order[next_servo]].pulselength;
         if (next_servo < SERVO_NUM)
-            if (servo_order[next_servo] == servo_order[next_servo + 1])
+            if (next_servo_pl <= currentOCR)
             {
                 next_servo ++;
                 pr = 0;
@@ -47,8 +52,8 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     if (next_servo < SERVO_NUM)
     {
         next_servo ++;
-        UTILS_AGGL2(OCR, PTIMER, BH) = servo[next_servo].pulselength >> 8;   // HIGH bit
-        UTILS_AGGL2(OCR, PTIMER, BL) = servo[next_servo].pulselength & 0xff; // LOW bit
+        UTILS_AGGL2(OCR, PTIMER, BH) = servo[next_servo].pulselength >> 8;   // High byte
+        UTILS_AGGL2(OCR, PTIMER, BL) = servo[next_servo].pulselength & 0xff; // Low byte
     }
 }
 
@@ -60,7 +65,31 @@ ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
     sei();
     for (int i = 0; i < SERVO_NUM; i ++)
     {
-        servo_action(i);
+        if (servo[i].position != servo[i].target)
+        {
+            if (servo[i].speed != 0)
+            {
+                if (servo[i].speed_counder == servo[i].speed)
+                {
+                    // Change position
+                    if (servo[i].position < servo[i].target)
+                        servo[i].position ++;
+                    else
+                        servo[i].position --;
+
+                    servo_adjust(i);
+                    servo[i].speed_counder = 0;
+                }
+                else
+                    servo[i].speed_counder ++;
+            }
+            else
+            {
+                // Immediate position change
+                servo[i].position = servo[i].target;
+                servo_adjust(i);
+            }
+        }
     }
 }
 

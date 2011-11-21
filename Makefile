@@ -33,7 +33,7 @@ DEBUG = stabs
 CSTANDARD = -std=gnu99
 
 # Place -D or -U options here
-CDEFS = -D F_CPU=8000000
+CDEFS = -D F_CPU=8000000UL
 
 # Place -I options here
 CINCS =
@@ -44,7 +44,6 @@ CWARN = -Wall -Wstrict-prototypes
 CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 #CTUNING += --param inline-call-cost=2 -finline-limit=3 -fno-inline-small-functions 
 CTUNING += -ffunction-sections -fdata-sections 
-CTUNING += -ffreestanding
 CTUNING += --combine -fwhole-program 
 CTUNING += -fno-tree-scev-cprop
 CTUNING += -fno-split-wide-types

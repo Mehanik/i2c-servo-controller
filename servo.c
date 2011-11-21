@@ -105,34 +105,6 @@ void servo_clr(uint8_t servo_num)
     }
 }
 
-/*
- * Change servo[num] position by 1 toward target
- */
-inline void servo_action(uint8_t num)
-{
-    if (servo[num].position != servo[num].target)
-    {
-        if (servo[num].speed != 0)
-        {
-            if (servo[num].speed_counder == servo[num].speed)
-            {
-                if (servo[num].position < servo[num].target)
-                    servo[num].position ++;
-                else
-                    servo[num].position --;
-                servo_adjust(num);
-                servo[num].speed_counder = 0;
-            }
-            else
-                servo[num].speed_counder ++;
-        }
-        else
-        {
-            servo[num].position = servo[num].target;
-            servo_adjust(num);
-        }
-    }
-}
 
 /*
  * Initialize servo
@@ -144,10 +116,8 @@ inline void servo_init(void)
         // Load Default/Saved values.
         uint8_t default_position = eeprom_read_word(& ee_max_pulselength[i]);
         servo[i].target = default_position;
-        servo[i].target_buf = default_position;
         servo[i].position = default_position;
         servo[i].speed = 0;
-        servo[i].speed_buf = 0;
     }
 
     // Sort servos by positions

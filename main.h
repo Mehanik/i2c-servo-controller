@@ -12,11 +12,11 @@
 
 #include <stdlib.h>
 #include <avr/io.h>
-#include <util/delay.h>
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <util/atomic.h>
 #include <avr/wdt.h>
+#include <util/delay.h>
 #include "hardware.h"
 #include "utils.h"
 
@@ -24,10 +24,8 @@ typedef struct
 {
     uint8_t position;           // Current position
     uint8_t target;             // Servo moves from position to target with speed
-    uint8_t target_buf;
     uint8_t speed;              // Number of increases or decreases of position
                                 // in time interval 1/200s
-    uint8_t speed_buf;
     uint8_t speed_counder;
     uint16_t pulselength;       // in PTIMER ticks
     uint16_t pulselength_buf;
@@ -56,7 +54,7 @@ uint16_t EEMEM ee_max_pulselength[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
 /*
  * Servo position after power on
  */
-uint8_t EEMEM ee_default_position[SERVO_NUM] = {128, 128, 128, 128, \
-                                                128, 128, 128, 128};
+uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
+                                                0, 0, 0, 0};
 
 #endif /* HWMPC_H_ */

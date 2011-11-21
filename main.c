@@ -18,12 +18,36 @@ void main (void)
     io_init();
     servo_init();
     timers_init();
-    wdt_enable(WDTO_1S);
+    /*wdt_enable(WDTO_1S);*/
     sei();
     run_pwm();
 
     for(;;)
     {
-        wdt_reset();
+        /*wdt_reset();*/
+
+        _delay_ms(40);
+        UTILS_PORT_FLIP(LED_PORT, LED_PIN);
+        _delay_us(1);
+        UTILS_PORT_FLIP(LED_PORT, LED_PIN);
+        for (int i = 0; i < SERVO_NUM; i++)
+        {
+            servo[i].speed = 0;
+            servo[i].target = 128;
+        }
+
+        _delay_ms(40);
+        for (int i = 0; i < SERVO_NUM; i++)
+        {
+            servo[i].speed = 0;
+            servo[i].target = 1;
+        }
+
+        _delay_ms(40);
+        for (int i = 0; i < SERVO_NUM; i++)
+        {
+            servo[i].speed = 0;
+            servo[i].target = 255;
+        }
     }
 }
