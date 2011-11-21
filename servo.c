@@ -24,7 +24,7 @@ void servo_adjust(uint8_t num)
 
     // Find servo's position in servo_order.
     uint8_t order = 0;
-    while ((servo_order[order] == num) && (order < SERVO_NUM))
+    while ((servo_order[order] != num) && (order < SERVO_NUM))
         order++;
 
     // Change servo_order
@@ -114,7 +114,7 @@ inline void servo_init(void)
     for (uint8_t i = 0; i < SERVO_NUM; i++)
     {
         // Load Default/Saved values.
-        uint8_t default_position = eeprom_read_word(& ee_max_pulselength[i]);
+        uint8_t default_position = eeprom_read_byte(& ee_default_position[i]);
         servo[i].target = default_position;
         servo[i].position = default_position;
         servo[i].speed = 0;
