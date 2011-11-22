@@ -27,29 +27,30 @@ typedef struct
     uint8_t speed;              // Number of increases or decreases of position
                                 // in time interval 1/200s
     uint8_t speed_counder;
-    uint16_t pulselength;       // in PTIMER ticks
-    uint16_t pulselength_buf;
 } servo_t;
 
-volatile uint8_t servo_order[SERVO_NUM];    // Servo's numbers, sorted 
-                                            // in ascending order 
-                                            // by servo.position
-volatile uint8_t servo_order_buf[SERVO_NUM];
-volatile uint8_t current_servo;    // Servo with number servo_order[current_servo] 
-                                // will be set to '0' at next PTIMER 
-                                // compare match B 
+typedef struct
+{
+    uint8_t num;
+    uint16_t pd;       // The pulse duration in PTIMER ticks
+} sorted_servo_t;
 
 volatile servo_t servo[SERVO_NUM];
+volatile sorted_servo_t servo_s[SERVO_NUM];    // Servos, sorted by position
+volatile sorted_servo_t servo_s_buf[SERVO_NUM];
+volatile sorted_servo_t servo_s_tmp[SERVO_NUM];
+volatile uint8_t current_servo;     // Number of servo in sorted_s
+                                    // whose output  will be set to LOW next
 
 uint8_t EEMEM ee_i2c_adders = 0x10;
 
 /*
  * Limits of the of the pulses length.
  */
-uint16_t EEMEM ee_min_pulselength[SERVO_NUM] = {W_MIN, W_MIN, W_MIN, W_MIN, \
+uint16_t EEMEM ee_min_pd[SERVO_NUM] = {W_MIN, W_MIN, W_MIN, W_MIN, \
                                                 W_MIN, W_MIN, W_MIN, W_MIN};
 
-uint16_t EEMEM ee_max_pulselength[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
+uint16_t EEMEM ee_max_pd[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
                                                 W_MAX, W_MAX, W_MAX, W_MAX};
 
 /*
@@ -64,5 +65,25 @@ uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
     _delay_us(100);\
     UTILS_PORT_CLR(LED_PORT, LED_PIN);\
 }
+
+#if 0
+    uint8_t * s_port[SERVO_NUM] = { & UTILS_AGGL(PORT, SERVO0_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO1_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO2_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO3_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO4_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO5_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO6_PORT), \
+                                    & UTILS_AGGL(PORT, SERVO7_PORT)};
+
+    uint8_t const s_pin[SERVO_NUM] = {1 << SERVO0_PIN, \
+                                      1 << SERVO1_PIN, \
+                                      1 << SERVO2_PIN, \
+                                      1 << SERVO3_PIN, \
+                                      1 << SERVO4_PIN, \
+                                      1 << SERVO5_PIN, \
+                                      1 << SERVO6_PIN, \
+                                      1 << SERVO7_PIN};
+#endif
 
 #endif /* HWMPC_H_ */

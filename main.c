@@ -18,12 +18,17 @@ void main (void)
     io_init();
     servo_init();
     timers_init();
-    wdt_enable(WDTO_1S);
+    /*wdt_enable(WDTO_1S);*/
     sei();
     run_pwm();
 
     for(;;)
     {
+        
+        for (int i = 0; i < SERVO_NUM; i++)
+        {
+            servo[i].position = 1;
+        }
         wdt_reset();
     }
 }

@@ -20,13 +20,13 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
 
     for (int i = 0; i < SERVO_NUM; i++)
     {
-        servo[i].pulselength = servo[i].pulselength_buf;
-        servo_order[i] = servo_order_buf[i];
+        servo_s[i].pd = servo_s_buf[i].pd;
+        servo_s[i].num = servo_s_buf[i].num;
     }
 
     // Load PTIMER OCRnB
     current_servo = 0;
-    UTILS_AGGL2(OCR, PTIMER, B) = servo[servo_order[current_servo]].pulselength; 
+    UTILS_AGGL2(OCR, PTIMER, B) = servo_s[current_servo].pd; 
 }
 
 /*
@@ -37,22 +37,22 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     uint8_t pr = 0;
     while (!pr)
     {
-        servo_clr(servo_order[current_servo]);
+        servo_clr(servo_s[current_servo].num);
         pr = 1;
         if (current_servo < SERVO_NUM - 1)
         {
-            current_servo ++;
-            uint16_t next_servo_pl = \
-                             servo[servo_order[current_servo]].pulselength;
-            uint16_t currentOCR;
-            currentOCR = UTILS_AGGL(TCNT, PTIMER); // Reading order rigth? I'm not sure.
-            if (next_servo_pl <= currentOCR + 1)
+            current_servo++;
+            uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); // Is the order of 
+                                                            // reading correct? 
+                                                            // I'm not sure.
+            if (servo_s[current_servo].pd <= currentOCR + 1)
             {
+                // Similar values;
                 pr = 0;
             }
             else
             {
-                UTILS_AGGL2(OCR, PTIMER, B) = servo[servo_order[current_servo]].pulselength; 
+                UTILS_AGGL2(OCR, PTIMER, B) = servo_s[current_servo].pd; 
             }
         }
     }

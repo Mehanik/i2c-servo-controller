@@ -10,21 +10,15 @@
 #include "main.h"
 
 /*
- * Adjust pulselength for servo[num]
+ * Adjust pd for servo[num]
  */
 void servo_adjust(uint8_t num)
 {
-    // Find length of pulses, in PTIMER ticks.
-    uint16_t min_pl =  eeprom_read_word(& ee_min_pulselength[num]);
-    uint16_t max_pl =  eeprom_read_word(& ee_max_pulselength[num]);
     uint8_t  position = servo[num].position;
-
-    servo[num].pulselength_buf = min_pl \
-                     + (uint32_t) position * (max_pl - min_pl) / 255;
 
     // Find servo's position in servo_order_buf.
     uint8_t order = 0;
-    while ((servo_order_buf[order] != num) && (order < SERVO_NUM))
+    while ((servo_s_tmp[order].num != num) && (order < SERVO_NUM))
         order++;
 
     // Change servo_order_buf
@@ -33,21 +27,45 @@ void servo_adjust(uint8_t num)
     {
         sort_done = 1;
         if (order > 0)
-            if (servo[servo_order_buf[order - 1]].position > position)
+        {
+            uint8_t prevnum = servo_s_tmp[order - 1].num;
+            if (servo[prevnum].position > position)
             {
-                servo_order_buf[order] = servo_order[order - 1];
+                servo_s_tmp[order].num = servo_s_tmp[order - 1].num;
+                servo_s_tmp[order].pd = servo_s_tmp[order - 1].pd;
                 order --;
                 sort_done = 0;
             }
+        }
         if (order < SERVO_NUM - 1)
-            if (servo[servo_order_buf[order + 1]].position < position)
+        {
+            uint8_t nextnum = servo_s_tmp[order + 1].num;
+            if (servo[nextnum].position < position)
             {
-                servo_order_buf[order] = servo_order[order + 1];
+                servo_s_tmp[order].num = servo_s_tmp[order + 1].num;
+                servo_s_tmp[order].pd = servo_s_tmp[order + 1].pd;
                 order ++;
                 sort_done = 0;
             }
+        }
     }
-    servo_order_buf[order] = num;
+
+    // Find length of pulses, in PTIMER ticks.
+    uint16_t min_pl =  eeprom_read_word(& ee_min_pd[num]);
+    uint16_t max_pl =  eeprom_read_word(& ee_max_pd[num]);
+
+    servo_s_tmp[order].num = num;
+    servo_s_tmp[order].pd = min_pl \
+                     + (uint32_t) position * (max_pl - min_pl) / 255;
+
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        for (int i = 0; i < SERVO_NUM; i++)
+        {
+            servo_s_buf[i].num = servo_s_tmp[i].num;
+            servo_s_buf[i].pd = servo_s_tmp[i].pd;
+        }
+    }
 }
 
 /*
@@ -84,6 +102,7 @@ void servo_set_all(void)
 #endif
 void servo_clr(uint8_t servo_num)
 {
+#if 1
     switch(servo_num)
     {
         case 0: UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
@@ -103,6 +122,7 @@ void servo_clr(uint8_t servo_num)
         case 7: UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
             break;
     }
+#endif
 }
 
 
@@ -129,7 +149,7 @@ inline void servo_init(void)
             if ((servo[num].position < ipos) \
                     || ((servo[num].position == ipos) && (num < i))) 
                 ltc++;
-        servo_order_buf[ltc] = i;
+        servo_s_tmp[ltc].num = i;
     }
 
     for (uint8_t i = 0; i < SERVO_NUM; i++)
