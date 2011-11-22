@@ -34,7 +34,8 @@ typedef struct
 volatile uint8_t servo_order[SERVO_NUM];    // Servo's numbers, sorted 
                                             // in ascending order 
                                             // by servo.position
-volatile uint8_t next_servo;    // Servo with number servo_order[next_servo] 
+volatile uint8_t servo_order_buf[SERVO_NUM];
+volatile uint8_t current_servo;    // Servo with number servo_order[current_servo] 
                                 // will be set to '0' at next PTIMER 
                                 // compare match B 
 
@@ -56,5 +57,12 @@ uint16_t EEMEM ee_max_pulselength[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
  */
 uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
                                                 0, 0, 0, 0};
+
+#define _LED_BLINK \
+{\
+    UTILS_PORT_SET(LED_PORT, LED_PIN);\
+    _delay_us(100);\
+    UTILS_PORT_CLR(LED_PORT, LED_PIN);\
+}
 
 #endif /* HWMPC_H_ */

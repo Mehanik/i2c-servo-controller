@@ -9,6 +9,7 @@
 
 #include "main.h" 
 
+
 /*
  * PTIMER, compare match A
  * called every (1 / F_PWM) seconds
@@ -18,12 +19,14 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
     servo_set_all();
 
     for (int i = 0; i < SERVO_NUM; i++)
+    {
         servo[i].pulselength = servo[i].pulselength_buf;
+        servo_order[i] = servo_order_buf[i];
+    }
 
     // Load PTIMER OCRnB
-    next_servo = 0;
-    UTILS_AGGL2(OCR, PTIMER, BH) = servo[0].pulselength >> 8;   // HIGH bit
-    UTILS_AGGL2(OCR, PTIMER, BL) = servo[0].pulselength & 0xff; // LOW bit
+    current_servo = 0;
+    UTILS_AGGL2(OCR, PTIMER, B) = servo[servo_order[current_servo]].pulselength; 
 }
 
 /*
@@ -34,26 +37,24 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     uint8_t pr = 0;
     while (!pr)
     {
-        servo_clr(servo_order[next_servo]);
-
+        servo_clr(servo_order[current_servo]);
         pr = 1;
-        uint16_t currentOCR;
-        currentOCR = UTILS_AGGL2(OCR, PTIMER, BL);       // Low byte
-        currentOCR = UTILS_AGGL2(OCR, PTIMER, BH) << 8;  // High byte
-        uint16_t next_servo_pl = servo[servo_order[next_servo]].pulselength;
-        if (next_servo < SERVO_NUM)
-            if (next_servo_pl <= currentOCR)
+        if (current_servo < SERVO_NUM - 1)
+        {
+            current_servo ++;
+            uint16_t next_servo_pl = \
+                             servo[servo_order[current_servo]].pulselength;
+            uint16_t currentOCR;
+            currentOCR = UTILS_AGGL(TCNT, PTIMER); // Reading order rigth? I'm not sure.
+            if (next_servo_pl <= currentOCR + 1)
             {
-                next_servo ++;
                 pr = 0;
             }
-    }
-
-    if (next_servo < SERVO_NUM)
-    {
-        next_servo ++;
-        UTILS_AGGL2(OCR, PTIMER, BH) = servo[next_servo].pulselength >> 8;   // High byte
-        UTILS_AGGL2(OCR, PTIMER, BL) = servo[next_servo].pulselength & 0xff; // Low byte
+            else
+            {
+                UTILS_AGGL2(OCR, PTIMER, B) = servo[servo_order[current_servo]].pulselength; 
+            }
+        }
     }
 }
 
@@ -105,8 +106,7 @@ inline void timers_init(void)
     UTILS_AGGL2(TCCR, PTIMER, A) = PTIMER_TCCRA;        // load TCCRnA
 
     // Load OCRnA
-    UTILS_AGGL2(OCR, PTIMER, AH) = PTIMER_MOD >> 8;     // HIGH bit
-    UTILS_AGGL2(OCR, PTIMER, AL) = PTIMER_MOD & 0xff;   // LOW bit
+    UTILS_AGGL2(OCR, PTIMER, A) = PTIMER_MOD; 
 
     // Set interrupts flags
     UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, A)) \

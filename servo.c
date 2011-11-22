@@ -20,34 +20,34 @@ void servo_adjust(uint8_t num)
     uint8_t  position = servo[num].position;
 
     servo[num].pulselength_buf = min_pl \
-                     + (uint32_t) position * (max_pl - min_pl) / 256;
+                     + (uint32_t) position * (max_pl - min_pl) / 255;
 
-    // Find servo's position in servo_order.
+    // Find servo's position in servo_order_buf.
     uint8_t order = 0;
-    while ((servo_order[order] != num) && (order < SERVO_NUM))
+    while ((servo_order_buf[order] != num) && (order < SERVO_NUM))
         order++;
 
-    // Change servo_order
+    // Change servo_order_buf
     uint8_t sort_done = 0;
     while (! sort_done)
     {
         sort_done = 1;
         if (order > 0)
-            if (servo[servo_order[order - 1]].position > position)
+            if (servo[servo_order_buf[order - 1]].position > position)
             {
-                servo_order[order] = servo_order[order - 1];
+                servo_order_buf[order] = servo_order[order - 1];
                 order --;
                 sort_done = 0;
             }
-        if (order < SERVO_NUM)
-            if (servo[servo_order[order + 1]].position < position)
+        if (order < SERVO_NUM - 1)
+            if (servo[servo_order_buf[order + 1]].position < position)
             {
-                servo_order[order] = servo_order[order + 1];
+                servo_order_buf[order] = servo_order[order + 1];
                 order ++;
                 sort_done = 0;
             }
     }
-    servo_order[order] = num;
+    servo_order_buf[order] = num;
 }
 
 /*
@@ -129,7 +129,7 @@ inline void servo_init(void)
             if ((servo[num].position < ipos) \
                     || ((servo[num].position == ipos) && (num < i))) 
                 ltc++;
-        servo_order[ltc] = i;
+        servo_order_buf[ltc] = i;
     }
 
     for (uint8_t i = 0; i < SERVO_NUM; i++)
