@@ -37,7 +37,7 @@ typedef struct
 } sorted_servo_t;
 
 volatile servo_t servo[SERVO_NUM];
-volatile sorted_servo_t servo_s[SERVO_NUM];    // Servos, sorted by position
+volatile sorted_servo_t servo_s[SERVO_NUM + 1];    // Servos, sorted by position
 volatile sorted_servo_t servo_s_buf[SERVO_NUM];
 volatile sorted_servo_t servo_s_tmp[SERVO_NUM];
 volatile uint8_t current_servo;

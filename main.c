@@ -24,11 +24,12 @@ void main (void)
 
     for(;;)
     {
-        
+
         for (uint8_t i = 0; i < SERVO_NUM; i++)
         {
-            servo[i].position = 1;
+            servo[i].target = 1;
         }
+        
         /*wdt_reset();*/
     }
 }

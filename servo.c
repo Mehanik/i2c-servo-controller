@@ -160,4 +160,6 @@ inline void servo_init(void)
     {
         servo_adjust(i);
     }
+
+    servo_s[SERVO_NUM].position = 0;
 }

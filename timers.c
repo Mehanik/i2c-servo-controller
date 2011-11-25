@@ -38,19 +38,20 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     _LED_FLIP;
     // Find next servo with another time
     uint8_t upto = current_servo;
-    uint8_t position = servo_s[current_servo].pd;
+    uint8_t position = servo_s[current_servo].position;
     uint16_t pd = servo_s[current_servo].pd;
-    while ((servo_s[upto].position == position) && (upto < SERVO_NUM - 1 ))
-        upto ++;
+    if (position > 0)
+        while (servo_s[upto].position == position)
+            upto ++;
 
-    // 
     _LED_FLIP;
+    // 
     for (uint8_t i = current_servo; i <= upto; i++)
     {
         servo_clr(servo_s[i].num);      
     }
-    _LED_FLIP;
 
+    _LED_FLIP;
     upto ++;
     uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); 
     if (servo_s[upto].pd >= currentOCR + 1)
