@@ -18,7 +18,7 @@ void servo_adjust(uint8_t num)
 
     // Find servo's position in servo_order_buf.
     uint8_t order = 0;
-    while ((servo_s_tmp[order].num != num) && (order < SERVO_NUM))
+    while (servo_s_tmp[order].num != num) // && (order < SERVO_NUM - 1)
         order++;
 
     // Change servo_order_buf
@@ -33,6 +33,7 @@ void servo_adjust(uint8_t num)
             {
                 servo_s_tmp[order].num = servo_s_tmp[order - 1].num;
                 servo_s_tmp[order].pd = servo_s_tmp[order - 1].pd;
+                servo_s_tmp[order].position = servo_s_tmp[order - 1].position;
                 order --;
                 sort_done = 0;
             }
@@ -44,6 +45,7 @@ void servo_adjust(uint8_t num)
             {
                 servo_s_tmp[order].num = servo_s_tmp[order + 1].num;
                 servo_s_tmp[order].pd = servo_s_tmp[order + 1].pd;
+                servo_s_tmp[order].position = servo_s_tmp[order + 1].position;
                 order ++;
                 sort_done = 0;
             }
@@ -57,6 +59,7 @@ void servo_adjust(uint8_t num)
     servo_s_tmp[order].num = num;
     servo_s_tmp[order].pd = min_pl \
                      + (uint32_t) position * (max_pl - min_pl) / 255;
+    servo_s_tmp[order].position = position;
 
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
@@ -64,6 +67,7 @@ void servo_adjust(uint8_t num)
         {
             servo_s_buf[i].num = servo_s_tmp[i].num;
             servo_s_buf[i].pd = servo_s_tmp[i].pd;
+            servo_s_buf[i].position = servo_s_tmp[i].position;
         }
     }
 }

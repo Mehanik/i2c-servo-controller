@@ -25,10 +25,10 @@ void main (void)
     for(;;)
     {
         
-        for (int i = 0; i < SERVO_NUM; i++)
+        for (uint8_t i = 0; i < SERVO_NUM; i++)
         {
             servo[i].position = 1;
         }
-        wdt_reset();
+        /*wdt_reset();*/
     }
 }

@@ -18,10 +18,11 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
 {
     servo_set_all();
 
-    for (int i = 0; i < SERVO_NUM; i++)
+    for (uint8_t i = 0; i < SERVO_NUM; i++)
     {
         servo_s[i].pd = servo_s_buf[i].pd;
         servo_s[i].num = servo_s_buf[i].num;
+        servo_s[i].position = servo_s_buf[i].position;
     }
 
     // Load PTIMER OCRnB
@@ -34,28 +35,35 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
  */
 ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
 {
-    uint8_t pr = 0;
-    while (!pr)
+    _LED_FLIP;
+    // Find next servo with another time
+    uint8_t upto = current_servo;
+    uint8_t position = servo_s[current_servo].pd;
+    uint16_t pd = servo_s[current_servo].pd;
+    while ((servo_s[upto].position == position) && (upto < SERVO_NUM - 1 ))
+        upto ++;
+
+    // 
+    _LED_FLIP;
+    for (uint8_t i = current_servo; i <= upto; i++)
     {
-        servo_clr(servo_s[current_servo].num);
-        pr = 1;
-        if (current_servo < SERVO_NUM - 1)
-        {
-            current_servo++;
-            uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); // Is the order of 
-                                                            // reading correct? 
-                                                            // I'm not sure.
-            if (servo_s[current_servo].pd <= currentOCR + 1)
-            {
-                // Similar values;
-                pr = 0;
-            }
-            else
-            {
-                UTILS_AGGL2(OCR, PTIMER, B) = servo_s[current_servo].pd; 
-            }
-        }
+        servo_clr(servo_s[i].num);      
     }
+    _LED_FLIP;
+
+    upto ++;
+    uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); 
+    if (servo_s[upto].pd >= currentOCR + 1)
+    {
+        // Set interrupt flag
+        UTILS_AGGL(TIFR, PTIMER) |= UTILS_AGGL2(OCF, PTIMER, B);
+    }
+    else
+    {
+        UTILS_AGGL2(OCR, PTIMER, B) = servo_s[upto].pd; 
+    }
+    current_servo = upto;
+    _LED_FLIP;
 }
 
 /*
@@ -64,7 +72,7 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
 ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
 {
     sei();
-    for (int i = 0; i < SERVO_NUM; i ++)
+    for (uint8_t i = 0; i < SERVO_NUM; i ++)
     {
         if (servo[i].position != servo[i].target)
         {
