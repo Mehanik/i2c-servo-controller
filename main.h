@@ -62,7 +62,7 @@ uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
 #define _LED_BLINK \
 {\
     UTILS_PORT_SET(LED_PORT, LED_PIN);\
-    _delay_us(10);\
+    _delay_us(2);\
     UTILS_PORT_CLR(LED_PORT, LED_PIN);\
 }
 
