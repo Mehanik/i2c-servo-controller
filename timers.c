@@ -35,23 +35,23 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
  */
 ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
 {
-    _LED_FLIP;
+    _LED_BLINK;
     // Find next servo with another time
     uint8_t upto = current_servo;
-    uint8_t position = servo_s[current_servo].position;
-    uint16_t pd = servo_s[current_servo].pd;
-    if (position > 0)
+    uint8_t position = servo_s[upto].position;
+    
+    if (position)
         while (servo_s[upto].position == position)
             upto ++;
 
-    _LED_FLIP;
-    // 
-    for (uint8_t i = current_servo; i <= upto; i++)
+    _LED_BLINK;
+    
+    for (int i = current_servo; i <= upto; i++)
     {
         servo_clr(servo_s[i].num);      
     }
 
-    _LED_FLIP;
+    _LED_BLINK;
     upto ++;
     uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); 
     if (servo_s[upto].pd >= currentOCR + 1)
@@ -63,8 +63,8 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     {
         UTILS_AGGL2(OCR, PTIMER, B) = servo_s[upto].pd; 
     }
+    _LED_BLINK;
     current_servo = upto;
-    _LED_FLIP;
 }
 
 /*
@@ -77,6 +77,7 @@ ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
     {
         if (servo[i].position != servo[i].target)
         {
+            UTILS_PORT_SET(LED_PORT, LED_PIN);
             if (servo[i].speed != 0)
             {
                 if (servo[i].speed_counder == servo[i].speed)
@@ -99,6 +100,10 @@ ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
                 servo[i].position = servo[i].target;
                 servo_adjust(i);
             }
+        }
+        else
+        {
+            UTILS_PORT_CLR(LED_PORT, LED_PIN);
         }
     }
 }
