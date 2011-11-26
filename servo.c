@@ -104,30 +104,7 @@ void servo_set_all(void)
 #if SERVO_NUM != 8
 # error "This function should be modified"
 #endif
-void servo_clr(uint8_t servo_num)
-{
-    switch(servo_num)
-    {
-        case 0: UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
-            break;
-        case 1: UTILS_PORT_CLR(SERVO1_PORT, SERVO1_PIN);
-            break;
-        case 2: UTILS_PORT_CLR(SERVO2_PORT, SERVO2_PIN);
-            break;
-        case 3: UTILS_PORT_CLR(SERVO3_PORT, SERVO3_PIN);
-            break;
-        case 4: UTILS_PORT_CLR(SERVO4_PORT, SERVO4_PIN);
-            break;
-        case 5: UTILS_PORT_CLR(SERVO5_PORT, SERVO5_PIN);
-            break;
-        case 6: UTILS_PORT_CLR(SERVO6_PORT, SERVO6_PIN);
-            break;
-        case 7: UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
-            break;
-    }
-}
-
-void servo_clr_all(void)
+void servo_clr(void)
 {
     if (servo_state[0])
         UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
@@ -145,6 +122,14 @@ void servo_clr_all(void)
         UTILS_PORT_CLR(SERVO6_PORT, SERVO6_PIN);
     if (servo_state[7])
         UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
+}
+
+/*
+ *
+ */
+void servo_update(void)
+{
+
 }
 
 /*

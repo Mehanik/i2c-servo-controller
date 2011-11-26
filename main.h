@@ -42,7 +42,8 @@ volatile sorted_servo_t servo_s_buf[SERVO_NUM];
 volatile sorted_servo_t servo_s_tmp[SERVO_NUM];
 volatile uint8_t current_servo;
 
-volatile uint8_t servo_state[SERVO_NUM];
+volatile uint8_t servo_state[SERVO_NUM];    // If servo_state[n] is 0,
+                                            // output is set to 1
 
 uint8_t EEMEM ee_i2c_adders = 0x10;
 
@@ -69,25 +70,5 @@ uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
 }
 
 #define _LED_FLIP UTILS_PORT_FLIP(LED_PORT, LED_PIN);
-
-#if 0
-    uint8_t * s_port[SERVO_NUM] = { & UTILS_AGGL(PORT, SERVO0_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO1_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO2_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO3_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO4_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO5_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO6_PORT), \
-                                    & UTILS_AGGL(PORT, SERVO7_PORT)};
-
-    uint8_t const s_pin[SERVO_NUM] = {~(1 << SERVO0_PIN), \
-                                      ~(1 << SERVO1_PIN), \
-                                      ~(1 << SERVO2_PIN), \
-                                      ~(1 << SERVO3_PIN), \
-                                      ~(1 << SERVO4_PIN), \
-                                      ~(1 << SERVO5_PIN), \
-                                      ~(1 << SERVO6_PIN), \
-                                      ~(1 << SERVO7_PIN)};
-#endif
 
 #endif /* HWMPC_H_ */

@@ -28,6 +28,9 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
 
     // Load PTIMER OCRnB
     current_servo = 0;
+    // find first with non-zero position
+    while ((servo_s[current_servo].position == 0) && (current_servo < SERVO_NUM))
+        current_servo ++;
     UTILS_AGGL2(OCR, PTIMER, B) = servo_s[current_servo].pd; 
 }
 
@@ -41,8 +44,8 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     uint8_t upto = current_servo;
     uint8_t position = servo_s[upto].position;
     
-    if (position)
-        while (servo_s[upto].position == position)
+    if (position) // position != 0
+        while (servo_s[upto].position == position) // servo_s[SERVO_NUM].position == 0
             upto ++;
 
     _LED_BLINK;
@@ -52,22 +55,25 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
         servo_state[servo_s[i].num] = 1;      
     }
 
-    servo_clr_all();
+    servo_clr();
 
     _LED_BLINK;
-    upto ++;
-    uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); 
-    if (servo_s[upto].pd >= currentOCR + 1)
-    {
-        // Set interrupt flag
-        UTILS_AGGL(TIFR, PTIMER) |= UTILS_AGGL2(OCF, PTIMER, B);
-    }
-    else
-    {
-        UTILS_AGGL2(OCR, PTIMER, B) = servo_s[upto].pd; 
-    }
-    _LED_BLINK;
     current_servo = upto;
+    if (upto < SERVO_NUM - 1)
+    {
+        upto ++;
+        uint16_t currentOCR = UTILS_AGGL(TCNT, PTIMER); 
+        if (servo_s[upto].pd >= currentOCR + 1)
+        {
+            // Set interrupt flag
+            UTILS_AGGL(TIFR, PTIMER) |= UTILS_AGGL2(OCF, PTIMER, B);
+        }
+        else
+        {
+            UTILS_AGGL2(OCR, PTIMER, B) = servo_s[upto].pd; 
+        }
+        _LED_BLINK;
+    }
 }
 
 /*

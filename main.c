@@ -25,10 +25,15 @@ void main (void)
     for(;;)
     {
 
-        for (uint8_t i = 0; i < SERVO_NUM; i++)
+        for (uint8_t i = 0; i < 7; i++)
         {
             servo[i].target = 1;
         }
+
+        /*for (uint8_t i = 4; i < 7; i++)*/
+        /*{*/
+            /*servo[i].target = 128;*/
+        /*}*/
         
         /*wdt_reset();*/
     }
