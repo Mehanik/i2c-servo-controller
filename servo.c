@@ -106,7 +106,6 @@ void servo_set_all(void)
 #endif
 void servo_clr(uint8_t servo_num)
 {
-#if 1
     switch(servo_num)
     {
         case 0: UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
@@ -126,9 +125,27 @@ void servo_clr(uint8_t servo_num)
         case 7: UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
             break;
     }
-#endif
 }
 
+void servo_clr_all(void)
+{
+    if (servo_state[0])
+        UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
+    if (servo_state[1])
+        UTILS_PORT_CLR(SERVO1_PORT, SERVO1_PIN);
+    if (servo_state[2])
+        UTILS_PORT_CLR(SERVO2_PORT, SERVO2_PIN);
+    if (servo_state[3])
+        UTILS_PORT_CLR(SERVO3_PORT, SERVO3_PIN);
+    if (servo_state[4])
+        UTILS_PORT_CLR(SERVO4_PORT, SERVO4_PIN);
+    if (servo_state[5])
+        UTILS_PORT_CLR(SERVO5_PORT, SERVO5_PIN);
+    if (servo_state[6])
+        UTILS_PORT_CLR(SERVO6_PORT, SERVO6_PIN);
+    if (servo_state[7])
+        UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
+}
 
 /*
  * Initialize servo

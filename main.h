@@ -42,6 +42,8 @@ volatile sorted_servo_t servo_s_buf[SERVO_NUM];
 volatile sorted_servo_t servo_s_tmp[SERVO_NUM];
 volatile uint8_t current_servo;
 
+volatile uint8_t servo_state[SERVO_NUM];
+
 uint8_t EEMEM ee_i2c_adders = 0x10;
 
 /*

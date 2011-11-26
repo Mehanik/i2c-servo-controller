@@ -23,6 +23,7 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
         servo_s[i].pd = servo_s_buf[i].pd;
         servo_s[i].num = servo_s_buf[i].num;
         servo_s[i].position = servo_s_buf[i].position;
+        servo_state[i] = 0;
     }
 
     // Load PTIMER OCRnB
@@ -48,8 +49,10 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     
     for (int i = current_servo; i <= upto; i++)
     {
-        servo_clr(servo_s[i].num);      
+        servo_state[servo_s[i].num] = 1;      
     }
+
+    servo_clr_all();
 
     _LED_BLINK;
     upto ++;
