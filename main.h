@@ -26,24 +26,28 @@ typedef struct
     uint8_t target;             // Servo moves from position to target with speed
     uint8_t speed;              // Number of increases or decreases of position
                                 // in time interval 1/200s
-    uint8_t speed_counder;
+    uint8_t speed_counter;
+    uint16_t pl;              // length of pulses, in PTIMER ticks
 } servo_t;
 
 typedef struct
 {
-    uint8_t num;
-    uint16_t pd;       // The pulse duration in PTIMER ticks
-    uint8_t position;
-} sorted_servo_t;
+    uint16_t time;
+#if SERVO_NUM <= 8
+    uint8_t pin;    // if bit n of "out" is set to 1,
+                    // out of servo[n] is HIGH, othrwise -- LOW.
+#else
+    uint16_t pin;
+#endif
+} outstate_t;
 
-volatile servo_t servo[SERVO_NUM];
-volatile sorted_servo_t servo_s[SERVO_NUM + 1];    // Servos, sorted by position
-volatile sorted_servo_t servo_s_buf[SERVO_NUM];
-volatile sorted_servo_t servo_s_tmp[SERVO_NUM];
-volatile uint8_t current_servo;
+volatile servo_t servo[SERVO_NUM - 1];
+volatile outstate_t outstate[SERVO_NUM];
+volatile outstate_t outstate_buf[SERVO_NUM];
+uint8_t state_current;
+uint8_t state_max;
 
-volatile uint8_t servo_state[SERVO_NUM];    // If servo_state[n] is 0,
-                                            // output is set to 1
+uint8_t sorted_servo[SERVO_NUM - 1]; // numbers of servos sorted by position
 
 uint8_t EEMEM ee_i2c_adders = 0x10;
 

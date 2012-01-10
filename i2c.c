@@ -9,6 +9,8 @@
 
 #include "main.h"
 
+
+
 void i2c_init(void)
 {
     /* Set i2c address from EEPROM */

@@ -9,6 +9,40 @@
 
 #include "main.h"
 
+void gen_outstate(void)
+{
+    outstate_t outstate_tmp[SERVO_NUM];
+    uint8_t i = 0;
+    outstate_tmp[0].time = 0;
+    outstate_tmp[i].pin = -1; // 0xff
+
+    for(int j = 0; j < SERVO_NUM; j++)
+    {
+        uint8_t num = sorted_servo[j];
+        if (servo[num].position != outstate_tmp[i].time)
+        {
+            i++;
+            outstate_tmp[i].pin = -1; // 0xff
+            outstate_tmp[i].time = servo[num].pl;
+        }
+        outstate_tmp[i].pin &= ~_BV(num);
+    }
+    state_max = i;
+
+    for (uint8_t i = 0; i < SERVO_NUM; i++)
+    {
+        outstate_tmp[i + 1].pin &= outstate_tmp[i].pin;
+    }
+
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        for (uint8_t i = 0; i <= SERVO_NUM; i++)
+        {
+            outstate_buf[i] = outstate_tmp[i];
+        }
+    }
+}
+
 /*
  * Adjust pd for servo[num]
  */
@@ -16,9 +50,9 @@ void servo_adjust(uint8_t num)
 {
     uint8_t  position = servo[num].position;
 
-    // Find servo's position in servo_order_buf.
+    // Find servo's position in sorted_servo.
     uint8_t order = 0;
-    while (servo_s_tmp[order].num != num) // && (order < SERVO_NUM - 1)
+    while (sorted_servo[order] != num) // && (order < SERVO_NUM - 1)
         order++;
 
     // Change servo_order_buf
@@ -28,108 +62,38 @@ void servo_adjust(uint8_t num)
         sort_done = 1;
         if (order > 0)
         {
-            uint8_t prevnum = servo_s_tmp[order - 1].num;
+            uint8_t prevnum = sorted_servo[order - 1];
             if (servo[prevnum].position > position)
             {
-                servo_s_tmp[order].num = servo_s_tmp[order - 1].num;
-                servo_s_tmp[order].pd = servo_s_tmp[order - 1].pd;
-                servo_s_tmp[order].position = servo_s_tmp[order - 1].position;
+                sorted_servo[order] = sorted_servo[order - 1];
                 order --;
                 sort_done = 0;
             }
         }
         if (order < SERVO_NUM - 1)
         {
-            uint8_t nextnum = servo_s_tmp[order + 1].num;
+            uint8_t nextnum = sorted_servo[order + 1];
             if (servo[nextnum].position < position)
             {
-                servo_s_tmp[order].num = servo_s_tmp[order + 1].num;
-                servo_s_tmp[order].pd = servo_s_tmp[order + 1].pd;
-                servo_s_tmp[order].position = servo_s_tmp[order + 1].position;
+                sorted_servo[order] = sorted_servo[order + 1];
                 order ++;
                 sort_done = 0;
             }
         }
     }
+    sorted_servo[order] = num;
 
     // Find length of pulses, in PTIMER ticks.
     uint16_t min_pl =  eeprom_read_word(& ee_min_pd[num]);
     uint16_t max_pl =  eeprom_read_word(& ee_max_pd[num]);
 
-    servo_s_tmp[order].num = num;
-    servo_s_tmp[order].pd = min_pl \
+    if (servo[num].position == 0)
+        servo[num].pl = 0;
+    else
+        servo[num].pl = min_pl \
                      + (uint32_t) position * (max_pl - min_pl) / 255;
-    servo_s_tmp[order].position = position;
 
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        for (int i = 0; i < SERVO_NUM; i++)
-        {
-            servo_s_buf[i].num = servo_s_tmp[i].num;
-            servo_s_buf[i].pd = servo_s_tmp[i].pd;
-            servo_s_buf[i].position = servo_s_tmp[i].position;
-        }
-    }
-}
-
-/*
- * Set all servo pins to HIGH
- */
-#if SERVO_NUM != 8
-# error "This function should be modified"
-#endif
-void servo_set_all(void)
-{
-    if (servo[0].position > 0)
-        UTILS_PORT_SET(SERVO0_PORT, SERVO0_PIN);
-    if (servo[1].position > 0)
-        UTILS_PORT_SET(SERVO1_PORT, SERVO1_PIN);
-    if (servo[2].position > 0)
-        UTILS_PORT_SET(SERVO2_PORT, SERVO2_PIN);
-    if (servo[3].position > 0)
-        UTILS_PORT_SET(SERVO3_PORT, SERVO3_PIN);
-    if (servo[4].position > 0)
-        UTILS_PORT_SET(SERVO4_PORT, SERVO4_PIN);
-    if (servo[5].position > 0)
-        UTILS_PORT_SET(SERVO5_PORT, SERVO5_PIN);
-    if (servo[6].position > 0)
-        UTILS_PORT_SET(SERVO6_PORT, SERVO6_PIN);
-    if (servo[7].position > 0)
-        UTILS_PORT_SET(SERVO7_PORT, SERVO7_PIN);
-}
-
-/*
- * Set servo pin to LOW
- */
-#if SERVO_NUM != 8
-# error "This function should be modified"
-#endif
-void servo_clr(void)
-{
-    if (servo_state[0])
-        UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
-    if (servo_state[1])
-        UTILS_PORT_CLR(SERVO1_PORT, SERVO1_PIN);
-    if (servo_state[2])
-        UTILS_PORT_CLR(SERVO2_PORT, SERVO2_PIN);
-    if (servo_state[3])
-        UTILS_PORT_CLR(SERVO3_PORT, SERVO3_PIN);
-    if (servo_state[4])
-        UTILS_PORT_CLR(SERVO4_PORT, SERVO4_PIN);
-    if (servo_state[5])
-        UTILS_PORT_CLR(SERVO5_PORT, SERVO5_PIN);
-    if (servo_state[6])
-        UTILS_PORT_CLR(SERVO6_PORT, SERVO6_PIN);
-    if (servo_state[7])
-        UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
-}
-
-/*
- *
- */
-void servo_update(void)
-{
-
+    gen_outstate();
 }
 
 /*
@@ -149,19 +113,69 @@ inline void servo_init(void)
     // Sort servos by positions
     for (int i = 0; i < SERVO_NUM; i++)
     {
-        uint8_t ltc = 0;
-        uint8_t ipos = servo[i].position;
+        uint8_t n = 0;
+        uint8_t curpos = servo[i].position;
         for (int num = 0; num < SERVO_NUM; num++)
-            if ((servo[num].position < ipos) \
-                    || ((servo[num].position == ipos) && (num < i))) 
-                ltc++;
-        servo_s_tmp[ltc].num = i;
+            if ((servo[num].position < curpos) \
+                    || ((servo[num].position == curpos) && (num < i))) 
+                n++;
+        sorted_servo[n] = i;
     }
 
-    for (uint8_t i = 0; i < SERVO_NUM; i++)
-    {
-        servo_adjust(i);
-    }
+    for (int i = 0; i < SERVO_NUM; i++)
+       servo_adjust(i);
 
-    servo_s[SERVO_NUM].position = 0;
+    gen_outstate();
+}
+
+/*
+ * Set outputs accordance with outstate
+ */
+#if SERVO_NUM != 8
+# error "This function should be modified"
+#endif
+void servo_out(void)
+{
+    uint8_t servo_state = outstate[state_current].pin;
+
+    // 0
+    if (servo_state & (1 << 0))
+        UTILS_PORT_SET(SERVO0_PORT, SERVO0_PIN);
+    else
+        UTILS_PORT_CLR(SERVO0_PORT, SERVO0_PIN);
+    // 1
+    if (servo_state & (1 << 1))
+        UTILS_PORT_SET(SERVO1_PORT, SERVO1_PIN);
+    else
+        UTILS_PORT_CLR(SERVO1_PORT, SERVO1_PIN);
+    // 2
+    if (servo_state & (1 << 2))
+        UTILS_PORT_SET(SERVO2_PORT, SERVO2_PIN);
+    else
+        UTILS_PORT_CLR(SERVO2_PORT, SERVO2_PIN);
+    // 3
+    if (servo_state & (1 << 3))
+        UTILS_PORT_SET(SERVO3_PORT, SERVO3_PIN);
+    else
+        UTILS_PORT_CLR(SERVO3_PORT, SERVO3_PIN);
+    // 4
+    if (servo_state & (1 << 4))
+        UTILS_PORT_SET(SERVO4_PORT, SERVO4_PIN);
+    else
+        UTILS_PORT_CLR(SERVO4_PORT, SERVO4_PIN);
+    // 5
+    if (servo_state & (1 << 5))
+        UTILS_PORT_SET(SERVO5_PORT, SERVO5_PIN);
+    else
+        UTILS_PORT_CLR(SERVO5_PORT, SERVO5_PIN);
+    // 6
+    if (servo_state & (1 << 6))
+        UTILS_PORT_SET(SERVO6_PORT, SERVO6_PIN);
+    else
+        UTILS_PORT_CLR(SERVO6_PORT, SERVO6_PIN);
+    // 7
+    if (servo_state & (1 << 7))
+        UTILS_PORT_SET(SERVO7_PORT, SERVO7_PIN);
+    else
+        UTILS_PORT_CLR(SERVO7_PORT, SERVO7_PIN);
 }
