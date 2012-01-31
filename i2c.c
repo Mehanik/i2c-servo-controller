@@ -23,7 +23,7 @@ void i2c_init(void)
     TWCR = _BV(TWEA) | _BV(TWEN);
 }
 
-void i2c_read ()
+void i2c_read (void)
 {
     if (i2cMemAddr < PD_AERA_BEGINING)
     {
@@ -43,23 +43,28 @@ void i2c_read ()
             {
                 uint8_t servNum = i2cMemAddr / 4;
                 case 0: // ee_min_pd HIGH byte
-                    eeprom_write_byte (((*uint8_t) *ee_min_pd[servNum]) + 1, TWDR);
+                    eeprom_write_byte (((uint8_t*) &ee_min_pd[servNum]) + 1, TWDR);
                     break;
                 case 1: // ee_min_pd LOW byte
-                    eeprom_write_byte ((*uint8_t) *ee_min_pd[servNum], TWDR);
+                    eeprom_write_byte ((uint8_t*) &ee_min_pd[servNum], TWDR);
                     break;
                 case 2: // ee_max_pd HIGH byte
-                    eeprom_write_byte (((*uint8_t) *ee_max_pd[servNum]) + 1, TWDR);
+                    eeprom_write_byte (((uint8_t*) &ee_max_pd[servNum]) + 1, TWDR);
                     break;
                 case 3: // ee_max_pd LOW byte
-                    eeprom_write_byte ((*uint8_t) *ee_max_pd[servNum], TWDR);
+                    eeprom_write_byte ((uint8_t*) &ee_max_pd[servNum], TWDR);
                     break;
 
             }
         }
+        else
+            if (i2cMemAddr >= STATE_AERA_BEGINING + 4)
+            {
+                eeprom_write_byte(&misc_info[i2cMemAddr - STATE_AERA_BEGINING - 4], TWDR);
+            }
 }
 
-void i2c_write ()
+void i2c_write (void)
 {
     if (i2cMemAddr < PD_AERA_BEGINING)
     {
@@ -79,16 +84,16 @@ void i2c_write ()
             {
                 uint8_t servNum = (i2cMemAddr - PD_AERA_BEGINING) / 4;
                 case 0: // ee_min_pd HIGH byte
-                    TWDR = eeprom_read_byte (((*uint8_t) *ee_min_pd[servNum]) + 1);
+                    TWDR = eeprom_read_byte (((uint8_t*) &ee_min_pd[servNum]) + 1);
                     break;
                 case 1: // ee_min_pd LOW byte
-                    TWDR = eeprom_read_byte ((*uint8_t) *ee_min_pd[servNum]);
+                    TWDR = eeprom_read_byte ((uint8_t*) &ee_min_pd[servNum]);
                     break;
                 case 2: // ee_max_pd HIGH byte
-                    TWDR = eeprom_read_byte (((*uint8_t) *ee_max_pd[servNum]) + 1);
+                    TWDR = eeprom_read_byte (((uint8_t*) &ee_max_pd[servNum]) + 1);
                     break;
                 case 3: // ee_max_pd LOW byte
-                    TWDR = eeprom_read_byte ((*uint8_t) *ee_max_pd[servNum]);
+                    TWDR = eeprom_read_byte ((uint8_t*) &ee_max_pd[servNum]);
                     break;
 
             }
@@ -113,7 +118,7 @@ void i2c_write ()
                 } else
                 {
                     // ???
-                    TWDR = 0;
+                    TWDR = eeprom_read_byte(&misc_info[i2cMemAddr - STATE_AERA_BEGINING - 4]);
                 }
             }
 }

@@ -17,6 +17,7 @@
 #include <util/atomic.h>
 #include <avr/wdt.h>
 #include <util/delay.h>
+#include <util/twi.h>
 #include "hardware.h"
 #include "utils.h"
 
@@ -75,6 +76,7 @@ uint16_t EEMEM ee_max_pd[SERVO_NUM] = {W_MAX, W_MAX, W_MAX, W_MAX, \
 uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
                                                 0, 0, 0, 0};
 
+uint8_t EEMEM misc_info[28];
 #define _LED_BLINK \
 {\
     UTILS_PORT_SET(LED_PORT, LED_PIN);\

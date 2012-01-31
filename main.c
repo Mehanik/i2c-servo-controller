@@ -23,17 +23,19 @@ void main (void)
     sei();
     run_pwm();
 
+    flags.new_buf_ready = 0;
+    flags.i2c_first_byte = 0;
+
     for (;;)
     {
         if (TWCR & _BV(TWINT))
         {
             switch (TWSR)
             {
-                case 0x60: // i2c start
+                case TW_SR_SLA_ACK: // i2c start
                     flags.i2c_first_byte = 1;
                     break;
-
-                case 0x80: // i2c byte received
+                case TW_SR_DATA_ACK: // i2c byte received
                     if (flags.i2c_first_byte)
                     {
                         i2cMemAddr = TWDR;
@@ -41,12 +43,13 @@ void main (void)
                     }
                     else
                     {
-                        ;
+                        i2c_read();
+                        i2cMemAddr ++;
                     }
-
                     break;
-
-                case 
+                case TW_ST_DATA_ACK:
+                    i2c_write();
+                    i2cMemAddr ++;
                     break;
             }
 
