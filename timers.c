@@ -17,15 +17,26 @@ inline void nextstate(void)
 
         // Load PTIMER OCRnB
         UTILS_AGGL2(OCR, PTIMER, B) = outstate[state_current].time;
+        // Enable interrupt B
+        UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, B)); 
         // TODO: if outstate.time very closely to current time
     }
     else
     {
-        for (uint8_t i = 0; i <= SERVO_NUM; i++)
+        _LED_BLINK;
+        if (flags.new_buf_ready)
         {
-            outstate[i] = outstate_buf[i];
+            for (uint8_t i = 0; i <= SERVO_NUM; i++)
+            {
+                outstate[i] = outstate_buf[i];
+            }
+            state_max = state_max_buf;
+
+            flags.new_buf_ready = 0;
         }
-        state_current = 0;
+
+        // Disable interrupt B
+        UTILS_AGGL(TIMSK, PTIMER) &= ~_BV(UTILS_AGGL2(OCIE, PTIMER, B)); 
     }
 }
 
@@ -36,8 +47,8 @@ inline void nextstate(void)
 ISR(UTILS_TIMERCOMP_VECT(PTIMER, A))
 {
     // event: timer reset
+    state_current = 0;
     servo_out();
-
     nextstate();
 }
 
@@ -51,47 +62,6 @@ ISR(UTILS_TIMERCOMP_VECT(PTIMER, B))
     nextstate();
 }
 
-/*
- * ITIMER, compare match A
- */
-ISR(UTILS_TIMERCOMP_VECT(ITIMER, A))
-{
-    // event: change position
-    sei();
-    for (uint8_t i = 0; i < SERVO_NUM; i ++)
-    {
-        if (servo[i].position != servo[i].target)
-        {
-            UTILS_PORT_SET(LED_PORT, LED_PIN);
-            if (servo[i].speed != 0)
-            {
-                if (servo[i].speed_counter == servo[i].speed)
-                {
-                    // Change position
-                    if (servo[i].position < servo[i].target)
-                        servo[i].position ++;
-                    else
-                        servo[i].position --;
-
-                    servo_adjust(i);
-                    servo[i].speed_counter = 0;
-                }
-                else
-                    servo[i].speed_counter ++;
-            }
-            else
-            {
-                // Immediate position change
-                servo[i].position = servo[i].target;
-                servo_adjust(i);
-            }
-        }
-        else
-        {
-            UTILS_PORT_CLR(LED_PORT, LED_PIN);
-        }
-    }
-}
 
 /*
  * Timer initialization
@@ -102,35 +72,31 @@ inline void timers_init(void)
     /*
      * PTIMER
      */
-    UTILS_AGGL2(TCCR, PTIMER, A) = PTIMER_TCCRA;        // load TCCRnA
-
-    // Load OCRnA
+    UTILS_AGGL2(TCCR, PTIMER, A) = PTIMER_TCCRA;
     UTILS_AGGL2(OCR, PTIMER, A) = PTIMER_MOD; 
 
-    // Set interrupts flags
-    UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, A)) \
-                               | _BV(UTILS_AGGL2(OCIE, PTIMER, B));
+    // Enable interrupt A
+    UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, A)); 
+
     /*
      * ITIMER
      */
-    UTILS_AGGL2(TCCR, ITIMER, A) = ITIMER_TCCRA;        // load TCCRnA
+    UTILS_AGGL2(TCCR, ITIMER, A) = ITIMER_TCCRA;
     UTILS_AGGL2(OCR, ITIMER, A) = ITIMER_OCRA;
-    // Set interrupts flags
-    UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
 }
 
 /*
- * Run PWM timer
+ * Run timers
  */
 inline void run_pwm(void)
 {
     /*
      * PTIMER
      */
-    UTILS_AGGL2(TCCR, PTIMER, B) = PTIMER_TCCRB; // load TCCRnB
+    UTILS_AGGL2(TCCR, PTIMER, B) = PTIMER_TCCRB;
 
     /*
      * ITIMER
      */
-    UTILS_AGGL2(TCCR, ITIMER, B) = ITIMER_TCCRB; // load TCCRnB
+    UTILS_AGGL2(TCCR, ITIMER, B) = ITIMER_TCCRB;
 }

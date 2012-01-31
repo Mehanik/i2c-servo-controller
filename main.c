@@ -18,18 +18,89 @@ void main (void)
     io_init();
     servo_init();
     timers_init();
-    /*wdt_enable(WDTO_1S);*/
+    i2c_init();
+    wdt_enable(WDTO_1S);
     sei();
     run_pwm();
 
-    for(;;)
+    for (;;)
     {
-
-        for (uint8_t i = 0; i <= 7; i++)
+        if (TWCR & _BV(TWINT))
         {
-            servo[i].target = 1;
+            switch (TWSR)
+            {
+                case 0x60: // i2c start
+                    flags.i2c_first_byte = 1;
+                    break;
+
+                case 0x80: // i2c byte received
+                    if (flags.i2c_first_byte)
+                    {
+                        i2cMemAddr = TWDR;
+                        flags.i2c_first_byte = 0;
+                    }
+                    else
+                    {
+                        ;
+                    }
+
+                    break;
+
+                case 
+                    break;
+            }
+
+            TWCR |= _BV(TWINT);
         }
 
-        /*wdt_reset();*/
+        // Timer ITIMER compare match A
+        if (UTILS_AGGL(TIFR, ITIMER) & _BV(UTILS_AGGL2(OCF, ITIMER, A)))
+        {
+            UTILS_AGGL(TIFR, ITIMER) |= _BV(UTILS_AGGL2(OCF, ITIMER, A)); 
+
+            for (uint8_t i = 0; i < SERVO_NUM; i ++)
+            {
+                if (servo[i].position != servo[i].target)
+                {
+                    /*UTILS_PORT_SET(LED_PORT, LED_PIN);*/
+                    if (servo[i].speed == 0)
+                    {
+                        // Immediate position change
+                        servo[i].position = servo[i].target;
+                        // Clear ITIMER compare match A interrupt enable flag
+                        UTILS_AGGL(TIMSK, ITIMER) &= !_BV(UTILS_AGGL2(OCIE, ITIMER, A));
+                        servo_adjust(i);
+                        // Set ITIMER compare match A interrupt enable flag
+                        UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
+                    }
+                    else
+                    {
+                        if (servo[i].speed_counter == servo[i].speed)
+                        {
+                            // Change position
+                            if (servo[i].position < servo[i].target)
+                                servo[i].position ++;
+                            else
+                                servo[i].position --;
+
+                            // Clear ITIMER compare match A interrupt enable flag
+                            UTILS_AGGL(TIMSK, ITIMER) &= !_BV(UTILS_AGGL2(OCIE, ITIMER, A));
+                            servo_adjust(i);
+                            // Set ITIMER compare match A interrupt enable flag
+                            UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
+                            servo[i].speed_counter = 0;
+                        }
+                        else
+                            servo[i].speed_counter ++;
+                    }
+                }
+                else
+                {
+                    /*UTILS_PORT_CLR(LED_PORT, LED_PIN);*/
+                }
+            }
+        }
+
+        wdt_reset();
     }
 }

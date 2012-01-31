@@ -27,7 +27,7 @@ typedef struct
     uint8_t speed;              // Number of increases or decreases of position
                                 // in time interval 1/200s
     uint8_t speed_counter;
-    uint16_t pl;              // length of pulses, in PTIMER ticks
+    uint16_t pl;                // length of pulses, in PTIMER ticks
 } servo_t;
 
 typedef struct
@@ -41,13 +41,22 @@ typedef struct
 #endif
 } outstate_t;
 
-volatile servo_t servo[SERVO_NUM - 1];
-volatile outstate_t outstate[SERVO_NUM];
-volatile outstate_t outstate_buf[SERVO_NUM];
-uint8_t state_current;
-uint8_t state_max;
+volatile servo_t servo[SERVO_NUM];
+volatile outstate_t outstate[SERVO_NUM + 1];
+volatile outstate_t outstate_buf[SERVO_NUM + 1];
+volatile uint8_t state_current;
+volatile uint8_t state_max;
+volatile uint8_t state_max_buf;
 
-uint8_t sorted_servo[SERVO_NUM - 1]; // numbers of servos sorted by position
+volatile uint8_t i2cMemAddr;
+
+struct
+{
+    uint8_t new_buf_ready : 1;  
+    uint8_t i2c_first_byte : 1;
+} flags;
+
+volatile uint8_t sorted_servo[SERVO_NUM]; // numbers of servos sorted by position
 
 uint8_t EEMEM ee_i2c_adders = 0x10;
 
@@ -69,7 +78,7 @@ uint8_t EEMEM ee_default_position[SERVO_NUM] = {0, 0, 0, 0, \
 #define _LED_BLINK \
 {\
     UTILS_PORT_SET(LED_PORT, LED_PIN);\
-    _delay_us(2);\
+    _delay_us(1);\
     UTILS_PORT_CLR(LED_PORT, LED_PIN);\
 }
 
