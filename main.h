@@ -28,7 +28,9 @@ typedef struct
     uint8_t speed;              // Number of increases or decreases of position
                                 // in time interval 1/200s
     uint8_t speed_counter;
-    uint16_t pl;                // length of pulses, in PTIMER ticks
+    uint16_t pd;                // pulse duration in PTIMER ticks
+    uint16_t min_pd;
+    uint16_t max_pd;
 } servo_t;
 
 typedef struct
@@ -51,10 +53,11 @@ volatile uint8_t state_max_buf;
 
 volatile uint8_t i2cMemAddr;
 
-struct
+volatile struct
 {
     uint8_t new_buf_ready : 1;  
     uint8_t i2c_first_byte : 1;
+    uint8_t servo_pd_changed : 1;
 } flags;
 
 volatile uint8_t sorted_servo[SERVO_NUM]; // numbers of servos sorted by position

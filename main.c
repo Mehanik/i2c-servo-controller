@@ -25,6 +25,7 @@ void main (void)
 
     flags.new_buf_ready = 0;
     flags.i2c_first_byte = 0;
+    flags.servo_pd_changed = 0;
 
     for (;;)
     {
@@ -65,16 +66,12 @@ void main (void)
             {
                 if (servo[i].position != servo[i].target)
                 {
-                    /*UTILS_PORT_SET(LED_PORT, LED_PIN);*/
+                    UTILS_PORT_SET(LED_PORT, LED_PIN);
                     if (servo[i].speed == 0)
                     {
                         // Immediate position change
                         servo[i].position = servo[i].target;
-                        // Clear ITIMER compare match A interrupt enable flag
-                        UTILS_AGGL(TIMSK, ITIMER) &= !_BV(UTILS_AGGL2(OCIE, ITIMER, A));
-                        servo_adjust(i);
-                        // Set ITIMER compare match A interrupt enable flag
-                        UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
+                        servo_find_pd(i);
                     }
                     else
                     {
@@ -85,12 +82,8 @@ void main (void)
                                 servo[i].position ++;
                             else
                                 servo[i].position --;
-
-                            // Clear ITIMER compare match A interrupt enable flag
-                            UTILS_AGGL(TIMSK, ITIMER) &= !_BV(UTILS_AGGL2(OCIE, ITIMER, A));
-                            servo_adjust(i);
-                            // Set ITIMER compare match A interrupt enable flag
-                            UTILS_AGGL(TIMSK, ITIMER) |= _BV(UTILS_AGGL2(OCIE, ITIMER, A));
+                            servo_find_pd(i);
+                            flags.servo_pd_changed = 1;
                             servo[i].speed_counter = 0;
                         }
                         else
@@ -99,11 +92,16 @@ void main (void)
                 }
                 else
                 {
-                    /*UTILS_PORT_CLR(LED_PORT, LED_PIN);*/
+                    UTILS_PORT_CLR(LED_PORT, LED_PIN);
                 }
             }
-        }
 
+            if (flags.servo_pd_changed)
+            {
+                servo_sort();
+                outstate_gen();
+            }
+        }
         wdt_reset();
     }
 }

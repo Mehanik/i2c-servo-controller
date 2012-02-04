@@ -12,7 +12,7 @@
 /*
  * Generate outstate_buf
  */
-void gen_outstate(void)
+inline void outstate_gen(void)
 {
     outstate_t outstate_tmp[SERVO_NUM + 1];
     uint8_t state_max_tmp;
@@ -23,11 +23,11 @@ void gen_outstate(void)
     for(int j = 0; j < SERVO_NUM; j++)
     {
         uint8_t num = sorted_servo[j];
-        if (servo[num].pl != outstate_tmp[i].time)
+        if (servo[num].pd != outstate_tmp[i].time)
         {
             i++;
             outstate_tmp[i].pin = ~0; // 0xff
-            outstate_tmp[i].time = servo[num].pl;
+            outstate_tmp[i].time = servo[num].pd;
         }
         outstate_tmp[i].pin &= ~_BV(num);
     }
@@ -45,58 +45,35 @@ void gen_outstate(void)
     }
     state_max_buf = state_max_tmp;
     flags.new_buf_ready = 1;
+    //TODO: 
 }
 
-/*
- * Sort servos
- */
-void servo_adjust(uint8_t num)
+inline void servo_find_pd(int num)
 {
     uint8_t  position = servo[num].position;
 
-    // Find servo's position in sorted_servo.
-    uint8_t order = 0;
-    while (sorted_servo[order] != num) // && (order < SERVO_NUM - 1)
-        order++;
-
-    uint8_t sort_done = 0;
-    while (! sort_done)
-    {
-        sort_done = 1;
-        if (order > 0)
-        {
-            uint8_t prevnum = sorted_servo[order - 1];
-            if (servo[prevnum].position > position)
-            {
-                sorted_servo[order] = sorted_servo[order - 1];
-                order --;
-                sort_done = 0;
-            }
-        }
-        if (order < SERVO_NUM - 1)
-        {
-            uint8_t nextnum = sorted_servo[order + 1];
-            if (servo[nextnum].position < position)
-            {
-                sorted_servo[order] = sorted_servo[order + 1];
-                order ++;
-                sort_done = 0;
-            }
-        }
-    }
-    sorted_servo[order] = num;
-
-    // Find length of pulses, in PTIMER ticks.
-    uint16_t min_pl =  eeprom_read_word(& ee_min_pd[num]);
-    uint16_t max_pl =  eeprom_read_word(& ee_max_pd[num]);
-
     if (servo[num].position == 0)
-        servo[num].pl = 0;
+        servo[num].pd = 0;
     else
-        servo[num].pl = min_pl \
-                     + (uint32_t) position * (max_pl - min_pl) / 255;
+        servo[num].pd = servo[num].min_pd + (uint32_t) position \
+                        * (servo[num].max_pd - servo[num].min_pd) / 255;
+}
 
-    gen_outstate();
+/*
+ * Sort servos by pulse duration
+ */
+inline void servo_sort(void)
+{
+    for (int i = 0; i < SERVO_NUM; i++)
+    {
+        uint8_t n = 0;
+        uint16_t curpd = servo[i].pd;
+        for (int num = 0; num < SERVO_NUM; num++)
+            if ((servo[num].pd < curpd) \
+                    || ((servo[num].pd == curpd) && (num < i))) 
+                n++;
+        sorted_servo[n] = i;
+    }
 }
 
 /*
@@ -111,24 +88,13 @@ inline void servo_init(void)
         servo[i].target = default_position;
         servo[i].position = default_position;
         servo[i].speed = 0;
+        servo[i].min_pd = eeprom_read_word(& ee_min_pd[i]);
+        servo[i].max_pd = eeprom_read_word(& ee_max_pd[i]);
+        servo_find_pd(i);
     }
 
-    // Sort servos by positions
-    for (int i = 0; i < SERVO_NUM; i++)
-    {
-        uint8_t n = 0;
-        uint8_t curpos = servo[i].position;
-        for (int num = 0; num < SERVO_NUM; num++)
-            if ((servo[num].position < curpos) \
-                    || ((servo[num].position == curpos) && (num < i))) 
-                n++;
-        sorted_servo[n] = i;
-    }
-
-    for (int i = 0; i < SERVO_NUM; i++)
-       servo_adjust(i);
-
-    gen_outstate();
+    servo_sort();
+    outstate_gen();
 }
 
 /*
