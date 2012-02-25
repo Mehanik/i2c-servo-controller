@@ -13,17 +13,15 @@ inline void nextstate(void)
 {
     if (state_current < state_max) 
     {
-        state_current ++;
-
         // Load PTIMER OCRnB
         UTILS_AGGL2(OCR, PTIMER, B) = outstate[state_current].time;
         // Enable interrupt B
         UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, B)); 
         // TODO: if outstate.time very closely to current time
+        state_current ++;
     }
     else
     {
-        _LED_BLINK;
         if (flags.new_buf_ready)
         {
             for (uint8_t i = 0; i <= SERVO_NUM; i++)

@@ -24,8 +24,8 @@
 typedef struct 
 {
     uint8_t position;           // Current position
-    uint8_t target;             // Servo moves from position to target with speed
-    uint8_t speed;              // Number of increases or decreases of position
+    uint8_t target;             // Servo moves from position to target with `speed'
+    uint8_t speed;              // Number of `position' increases or decreases 
                                 // in time interval 1/200s
     uint8_t speed_counter;
     uint16_t pd;                // pulse duration in PTIMER ticks
@@ -58,6 +58,7 @@ volatile struct
     uint8_t new_buf_ready : 1;  
     uint8_t i2c_first_byte : 1;
     uint8_t servo_pd_changed : 1;
+    uint8_t servo_minmaxpd_cnahged : 1;
 } flags;
 
 volatile uint8_t sorted_servo[SERVO_NUM]; // numbers of servos sorted by position

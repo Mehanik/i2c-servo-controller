@@ -46,21 +46,23 @@ void i2c_read (void)
                     eeprom_write_byte (((uint8_t*) &ee_min_pd[servNum]) + 1, TWDR);
                     break;
                 case 1: // ee_min_pd LOW byte
-                    // servo.min_pd updated after receiving low byte
                     eeprom_write_byte ((uint8_t*) &ee_min_pd[servNum], TWDR);
+                    // servo.min_pd update after receiving low byte
                     *(((uint8_t *) &servo[servNum].min_pd) + 1) = \
                         eeprom_read_byte ((uint8_t*) &ee_min_pd[servNum] + 1);
                     *((uint8_t *) &servo[servNum].min_pd) = TWDR;
+                    flags.servo_minmaxpd_cnahged = 1;
                     break;
                 case 2: // ee_max_pd HIGH byte
                     eeprom_write_byte (((uint8_t*) &ee_max_pd[servNum]) + 1, TWDR);
                     break;
                 case 3: // ee_max_pd LOW byte
-                    // servo.max_pd updated after receiving low byte
                     eeprom_write_byte ((uint8_t*) &ee_max_pd[servNum], TWDR);
+                    // servo.max_pd update after receiving low byte
                     *(((uint8_t *) &servo[servNum].max_pd) + 1) = \
                         eeprom_read_byte ((uint8_t*) &ee_max_pd[servNum] + 1);
                     *((uint8_t *) &servo[servNum].max_pd) = TWDR;
+                    flags.servo_minmaxpd_cnahged = 1;
                     break;
             }
         }

@@ -16,9 +16,15 @@ inline void outstate_gen(void)
 {
     outstate_t outstate_tmp[SERVO_NUM + 1];
     uint8_t state_max_tmp;
+    // write 1 all pin bits
+    for (uint8_t i = 0; i <= state_max_tmp - 1; i++)
+    {
+        outstate_tmp[i].pin = ~0; // 0xff
+    }
+
     uint8_t i = 0;
-    outstate_tmp[0].time = 0;
-    outstate_tmp[0].pin = ~0; // 0xff
+    outstate_tmp[0].time = 0;   // outstate[0].pin it is output condition on
+                                // timer overflow
 
     for(int j = 0; j < SERVO_NUM; j++)
     {
@@ -26,7 +32,6 @@ inline void outstate_gen(void)
         if (servo[num].pd != outstate_tmp[i].time)
         {
             i++;
-            outstate_tmp[i].pin = ~0; // 0xff
             outstate_tmp[i].time = servo[num].pd;
         }
         outstate_tmp[i].pin &= ~_BV(num);
@@ -48,9 +53,12 @@ inline void outstate_gen(void)
     //TODO: 
 }
 
+/*
+ * Find servo.pd
+ */
 inline void servo_find_pd(int num)
 {
-    uint8_t  position = servo[num].position;
+    uint8_t position = servo[num].position;
 
     if (servo[num].position == 0)
         servo[num].pd = 0;
@@ -60,7 +68,7 @@ inline void servo_find_pd(int num)
 }
 
 /*
- * Sort servos by pulse duration
+ * Sort servos by servo.pd
  */
 inline void servo_sort(void)
 {

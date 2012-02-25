@@ -26,11 +26,23 @@ void main (void)
     flags.new_buf_ready = 0;
     flags.i2c_first_byte = 0;
     flags.servo_pd_changed = 0;
+    flags.servo_minmaxpd_cnahged = 0;
+
+    /*UTILS_DDR_CLR(D, 2);*/
+    /*UTILS_PORT_SET(D, 2);*/
 
     for (;;)
     {
+
+        /*if (UTILS_PIN_VALUE(D, 2) == 0)*/
+        /*{*/
+            /*servo[0].target += 1; */
+        /*}*/
+
+        // i2c
         if (TWCR & _BV(TWINT))
         {
+            // i2c 
             switch (TWSR)
             {
                 case TW_SR_SLA_ACK: // i2c start
@@ -57,9 +69,10 @@ void main (void)
             TWCR |= _BV(TWINT);
         }
 
-        // Timer ITIMER compare match A
+        // servo.position 
         if (UTILS_AGGL(TIFR, ITIMER) & _BV(UTILS_AGGL2(OCF, ITIMER, A)))
         {
+            // Timer ITIMER compare match A
             UTILS_AGGL(TIFR, ITIMER) |= _BV(UTILS_AGGL2(OCF, ITIMER, A)); 
 
             for (uint8_t i = 0; i < SERVO_NUM; i ++)
@@ -69,9 +82,10 @@ void main (void)
                     UTILS_PORT_SET(LED_PORT, LED_PIN);
                     if (servo[i].speed == 0)
                     {
-                        // Immediate position change
+                        // Change position immediately
                         servo[i].position = servo[i].target;
                         servo_find_pd(i);
+                        flags.servo_pd_changed = 1;
                     }
                     else
                     {
@@ -96,10 +110,21 @@ void main (void)
                 }
             }
 
+            if (flags.servo_minmaxpd_cnahged)
+            {
+                for (uint8_t i = 0; i < SERVO_NUM; i ++)
+                {
+                    servo_find_pd(i);
+                }
+                flags.servo_pd_changed = 1;
+                flags.servo_minmaxpd_cnahged = 0;
+            }
+
             if (flags.servo_pd_changed)
             {
                 servo_sort();
                 outstate_gen();
+                flags.servo_pd_changed = 0;
             }
         }
         wdt_reset();
