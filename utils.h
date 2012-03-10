@@ -1,5 +1,5 @@
 /*
- *  Project: hwmpc-bt
+ *  Project: servo_controller
  *  File: utils.h - module contains general purpose macros and functions
  *  Author: Eugene Mikhantiev <mikhantiev@gmail.com>
  *  Creation Date: 05.12.2010

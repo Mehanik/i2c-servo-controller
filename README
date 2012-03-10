@@ -1,0 +1,1 @@
+Firmware source for servo-controller: interface between MCU (i2c bus) and servos (PWM).
