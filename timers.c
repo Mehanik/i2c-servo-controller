@@ -13,28 +13,29 @@ inline void nextstate(void)
 {
     if (state_current < state_max) 
     {
+        state_current ++;
         // Load PTIMER OCRnB
         UTILS_AGGL2(OCR, PTIMER, B) = outstate[state_current].time;
         // Enable interrupt B
         UTILS_AGGL(TIMSK, PTIMER) |= _BV(UTILS_AGGL2(OCIE, PTIMER, B)); 
         // TODO: if outstate.time very closely to current time
-        state_current ++;
+        UTILS_AGGL(TIFR, PTIMER) |= _BV(UTILS_AGGL2(OCF, PTIMER, B));
     }
     else
     {
+        // Disable interrupt B
+        UTILS_AGGL(TIMSK, PTIMER) &= ~_BV(UTILS_AGGL2(OCIE, PTIMER, B)); 
+
         if (flags.new_buf_ready)
         {
-            for (uint8_t i = 0; i <= SERVO_NUM; i++)
+            state_max = state_max_buf;
+            for (uint8_t i = 0; i <= state_max; i++)
             {
                 outstate[i] = outstate_buf[i];
             }
-            state_max = state_max_buf;
 
             flags.new_buf_ready = 0;
         }
-
-        // Disable interrupt B
-        UTILS_AGGL(TIMSK, PTIMER) &= ~_BV(UTILS_AGGL2(OCIE, PTIMER, B)); 
     }
 }
 
@@ -86,7 +87,7 @@ inline void timers_init(void)
 /*
  * Run timers
  */
-inline void run_pwm(void)
+inline void start_timers(void)
 {
     /*
      * PTIMER

@@ -84,7 +84,7 @@ uint8_t EEMEM misc_info[28];
 #define _LED_BLINK \
 {\
     UTILS_PORT_SET(LED_PORT, LED_PIN);\
-    _delay_us(1);\
+    _delay_us(700);\
     UTILS_PORT_CLR(LED_PORT, LED_PIN);\
 }
 

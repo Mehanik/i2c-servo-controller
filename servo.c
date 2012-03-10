@@ -16,10 +16,10 @@ inline void outstate_gen(void)
 {
     outstate_t outstate_tmp[SERVO_NUM + 1];
     uint8_t state_max_tmp;
-    // write 1 all pin bits
-    for (uint8_t i = 0; i <= state_max_tmp - 1; i++)
+
+    for (uint8_t i = 0; i < SERVO_NUM + 1; i++)
     {
-        outstate_tmp[i].pin = ~0; // 0xff
+        outstate_tmp[i].pin = -1; // 0xff
     }
 
     uint8_t i = 0;

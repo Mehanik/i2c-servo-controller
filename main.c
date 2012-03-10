@@ -13,32 +13,66 @@
 #include "timers.c"
 #include "i2c.c"
 
+#define MEGADEBUG
+
 void main (void)
 {
     io_init();
     servo_init();
     timers_init();
     i2c_init();
-    wdt_enable(WDTO_1S);
+    wdt_enable(WDTO_15MS);
     sei();
-    run_pwm();
+    start_timers();
 
     flags.new_buf_ready = 0;
     flags.i2c_first_byte = 0;
     flags.servo_pd_changed = 0;
     flags.servo_minmaxpd_cnahged = 0;
 
-    /*UTILS_DDR_CLR(D, 2);*/
-    /*UTILS_PORT_SET(D, 2);*/
+#ifdef MEGADEBUG
+    struct {
+        uint8_t sw1 : 1;
+        uint8_t sw2 : 1;
+    } ss;
+
+    UTILS_DDR_CLR(I2CSCL_PORT, I2CSCL_PIN);
+    UTILS_DDR_CLR(I2CSDA_PORT, I2CSDA_PIN);
+    UTILS_PORT_SET(I2CSCL_PORT, I2CSCL_PIN);
+    UTILS_PORT_SET(I2CSDA_PORT, I2CSDA_PIN);
+#endif
 
     for (;;)
     {
+#ifdef MEGADEBUG
+        if (!UTILS_PIN_VALUE(I2CSCL_PORT, I2CSCL_PIN))
+        {
+            if (!ss.sw1)
+            {
+                servo[0].target += 16;
+            }
+            ss.sw1 = 1;
+        }
+        else
+        {
+            ss.sw1 = 0;
+        }
 
-        /*if (UTILS_PIN_VALUE(D, 2) == 0)*/
-        /*{*/
-            /*servo[0].target += 1; */
-        /*}*/
+        if (!UTILS_PIN_VALUE(I2CSDA_PORT, I2CSDA_PIN))
+        {
+            if (!ss.sw2)
+            {
+                servo[0].target -= 16;
+            }
+            ss.sw2 = 1;
+        }
+        else
+        {
+            ss.sw2 = 0;
+        }
+#endif
 
+#ifndef MEGADEBUG
         // i2c
         if (TWCR & _BV(TWINT))
         {
@@ -68,6 +102,7 @@ void main (void)
 
             TWCR |= _BV(TWINT);
         }
+#endif
 
         // servo.position 
         if (UTILS_AGGL(TIFR, ITIMER) & _BV(UTILS_AGGL2(OCF, ITIMER, A)))
@@ -127,6 +162,7 @@ void main (void)
                 flags.servo_pd_changed = 0;
             }
         }
+
         wdt_reset();
     }
 }
