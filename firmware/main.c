@@ -13,7 +13,7 @@
 #include "timers.c"
 #include "i2c.c"
 
-#define MEGADEBUG
+/*#define MEGADEBUG*/
 
 void main (void)
 {
